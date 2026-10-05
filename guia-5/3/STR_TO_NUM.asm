@@ -1,0 +1,25 @@
+; Convertir un string, que representa un número entero en base 10, a un número.
+
+; PUSH <<STRING>>
+; CALL STR_TO_NUM
+; ADD SP, 4
+; DEVUELVE EN EAX EL NUMERO EN BASE 10
+
+STR_TO_NUM: PUSH BP
+MOV BP, SP
+PUSH EBX
+
+MOV EBX, [BP + 8]; EBX = STRING
+MOV EAX, 0
+
+ITERACION: CMP b[EBX], 0
+JZ FIN_STR
+MUL EAX, 10
+ADD EAX, b[EBX]
+SUB EAX, '0'
+ADD EBX, 1
+JMP ITERACION
+
+FIN_STR: POP EBX
+POP BP
+RET
