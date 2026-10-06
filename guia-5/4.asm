@@ -1,0 +1,57 @@
+// INCLUDE "3/STR_TO_NUM.asm"
+
+main: PUSH BP
+MOV BP, SP
+
+CMP [BP + 8], 3
+JNZ ERROR_PARAMETROS
+
+MOV EBX, [BP + 12]     ; EBX = argv
+
+MOV ECX, [EBX]         ; ECX -> operando 1
+MOV EDX, [EBX + 4]     ; EDX -> operador
+MOV EEX, [EBX + 8]     ; EEX -> operando 2
+
+; primer operando
+PUSH ECX
+CALL STR_TO_NUM
+ADD SP, 4
+MOV EFX, EAX
+
+; segundo operando
+PUSH EEX
+CALL STR_TO_NUM
+ADD SP, 4
+MOV EBX, EAX
+
+; decidir operación
+CMP b[EDX], '+'
+JZ SUMAR
+
+CMP b[EDX], '-'
+JZ RESTAR
+
+CMP b[EDX], '*'
+JZ MULTIPLICAR
+
+CMP b[EDX], '/'
+JZ DIVIDIR
+
+SUMAR: MOV EAX, EFX
+ADD EAX, EBX
+JMP RESULTADO
+
+RESTAR: MOV EAX, EFX
+SUB EAX, EBX
+JMP RESULTADO
+
+MULTIPLICAR: MOV EAX, EFX
+MUL EAX, EBX
+JMP RESULTADO
+
+DIVIDIR: MOV EAX, EFX
+DIV EAX, EBX
+JMP RESULTADO
+
+RESULTADO: 
+; EAX contiene el resultado

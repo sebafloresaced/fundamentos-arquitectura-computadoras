@@ -1,0 +1,193 @@
+MSG_SI EQU "Es frase palindroma\n"
+MSG_NO EQU "No es frase palindroma\n"
+
+main: MOV EDX, DS; leer frase en DS
+MOV ECX, 255
+SYS 0x03
+
+PUSH EDX
+CALL PALINDROMA
+ADD SP, 4
+
+RET
+
+; PALINDROMA
+;
+; PUSH <<PUNTERO STRING>>
+; CALL PALINDROMA
+; ADD SP, 4
+;
+; No modifica el string.
+; Imprime si es o no palindroma.
+
+PALINDROMA: PUSH BP
+MOV BP, SP
+
+PUSH EAX
+PUSH EBX
+PUSH ECX
+PUSH EDX
+PUSH EEX
+
+MOV EDX, [BP + 8]      ; EDX = puntero izquierdo
+MOV EAX, EDX           ; EAX = puntero para buscar el final
+
+BUSCAR_FIN: CMP b[EAX], 0
+JZ FIN_ENCONTRADO
+
+ADD EAX, 1
+JMP BUSCAR_FIN
+
+FIN_ENCONTRADO: CMP EAX, EDX; string vacio
+JZ ES_PALINDROMA
+SUB EAX, 1; EAX = último carácter
+
+ITERAR_STRING: CMP EAX, EDX; si los punteros se cruzaron o llegaron al mismo lugar
+JNP ES_PALINDROMA
+
+BUSCAR_IZQUIERDA: CMP EAX, EDX
+JNP ES_PALINDROMA
+
+MOV EEX, 0
+MOV EL, b[EDX]
+
+CALL NORMALIZAR
+; NORMALIZAR devuelve 0 si hay que ignorar el carácter
+CMP EL, 0
+JNZ CARACTER_IZQ_VALIDO
+
+ADD EDX, 1
+JMP BUSCAR_IZQUIERDA
+
+CARACTER_IZQ_VALIDO: MOV BL, EL; BL = carácter izquierdo normalizado
+
+BUSCAR_DERECHA: CMP EAX, EDX
+JN ES_PALINDROMA
+
+MOV EEX, 0
+MOV EL, b[EAX]
+
+CALL NORMALIZAR
+
+CMP EL, 0
+JNZ CARACTER_DER_VALIDO
+
+SUB EAX, 1
+JMP BUSCAR_DERECHA
+
+CARACTER_DER_VALIDO: MOV CL, EL; CL = carácter derecho normalizado
+
+; Comparar
+CMP BL, CL
+JNZ NO_ES_PALINDROMA
+
+ADD EDX, 1
+SUB EAX, 1
+JMP ITERAR_STRING
+
+ES_PALINDROMA: MOV EDX, KS
+ADD EDX, MSG_SI
+SYS 0x04
+JMP FIN_PALINDROMA
+
+NO_ES_PALINDROMA: MOV EDX, KS
+ADD EDX, MSG_NO
+SYS 0x04
+
+FIN_PALINDROMA: POP EEX
+POP EDX
+POP ECX
+POP EBX
+POP EAX
+POP BP
+RET
+
+; NORMALIZAR
+;
+; Recibe carácter en EL
+;
+; Devuelve en EL:
+;   letra en minúscula sin acento
+;   dígito sin cambios
+;   0 si el carácter debe ignorarse
+;
+; Así se ignoran automáticamente:
+; espacios, puntos, comas, !, ?, etc.
+
+NORMALIZAR: CMP EL, '0'
+JN PROBAR_MAYUSCULA
+
+CMP EL, '9'
+JP PROBAR_MAYUSCULA
+
+RET; '0' ... '9'
+
+PROBAR_MAYUSCULA: CMP EL, 'A'
+JN PROBAR_MINUSCULA
+
+CMP EL, 'Z'
+JP PROBAR_MINUSCULA
+
+ADD EL, 32; A-Z -> a-z
+RET
+
+PROBAR_MINUSCULA: CMP EL, 'a'
+JN PROBAR_ACENTOS
+
+CMP EL, 'z'
+JP PROBAR_ACENTOS
+
+RET
+
+PROBAR_ACENTOS: CMP EL, 0xE1; á Á -> a
+JZ ACENTO_A
+CMP EL, 0xC1
+JZ ACENTO_A
+
+; é É -> e
+CMP EL, 0xE9
+JZ ACENTO_E
+CMP EL, 0xC9
+JZ ACENTO_E
+
+; í Í -> i
+CMP EL, 0xED
+JZ ACENTO_I
+CMP EL, 0xCD
+JZ ACENTO_I
+
+; ó Ó -> o
+CMP EL, 0xF3
+JZ ACENTO_O
+CMP EL, 0xD3
+JZ ACENTO_O
+
+; ú Ú ü Ü -> u
+CMP EL, 0xFA
+JZ ACENTO_U
+CMP EL, 0xDA
+JZ ACENTO_U
+CMP EL, 0xFC
+JZ ACENTO_U
+CMP EL, 0xDC
+JZ ACENTO_U
+
+; cualquier otro carácter:
+; espacio, punto, coma, etc.
+MOV EL, 0
+RET
+
+ACENTO_A: MOV EL, 'a'
+RET
+
+ACENTO_E: MOV EL, 'e'
+RET
+
+ACENTO_I: MOV EL, 'i'
+RET
+
+ACENTO_O: MOV EL, 'o'
+RET
+
+ACENTO_U: MOV EL, 'u'
+RET
