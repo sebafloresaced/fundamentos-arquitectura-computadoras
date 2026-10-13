@@ -1,0 +1,29 @@
+\\ EXTRA 1024
+
+NULL EQU -1
+
+HEAP_INIT: MOV [ES], ES
+ADD [ES], 4
+RET
+
+; ALLOC:
+; PUSH << CANT BYTES >>
+; CALL ALLOC
+; ADD SP, 4
+; DEVUELVE EN EAX LA DIR
+
+ALLOC: PUSH BP
+    MOV BP, SP
+    PUSH BX
+    MOV EAX, NULL
+    MOV BX, [ES]
+    ADD BX, [BP + 8]
+    CMP BX, 1024
+    JP ALLOC_FIN
+    MOV EAX, [ES]
+    ADD [ES], [BP + 8]
+
+ALLOC_FIN: POP BX
+    MOV SP, BP
+    POP BP
+    RET
